@@ -12,5 +12,10 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    allowedHosts: [
+      'hope-ai-sn.replit.app',
+      'localhost',
+      '127.0.0.1'
+    ]
   },
 })
