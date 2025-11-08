@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: hope-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=hope-pet-assistant
+    networks:
+      - hope-network
+
+  agents:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile
+    container_name: hope-agents
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./agents:/app
+      - agents_models:/app/models
+    depends_on:
+      - mongodb
+    networks:
+      - hope-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hope-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - agents
+    networks:
+      - hope-network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hope-frontend
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - hope-network
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+  agents_models:
+
+networks:
+  hope-network:
+    driver: bridge
